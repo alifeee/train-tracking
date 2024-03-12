@@ -98,13 +98,8 @@ def get_trains(headcode) -> List[Train]:
     soup = BeautifulSoup(response_html, "html.parser")
 
     # FIND RESULTS
-    # find .service-results
-    results = soup.select_one(".service-results")
-    if not results:
-        raise ValueError("Results not found")
-
     # find .service-results > .service-link
-    all_results = results.select(".service-link")
+    all_results = soup.select(".service-results > .service-link")
     if not all_results:
         raise ValueError("Result not found")
 
