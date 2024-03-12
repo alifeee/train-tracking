@@ -13,6 +13,18 @@ HEADCODE = "2S80"
 
 re_showing = re.compile(r"Showing (\d+) services")
 
+HEADCODE_FIRST_NUMBER_MEANINGS = {
+    "1": "Indicates an express train with limited stops, with exceptions (test trains, 1Z99 rescue trains)",
+    "2": "Indicates a slow train with frequent stops, with exceptions (2Z02 Caroline and 2Qxx test trains)",
+    "3": "Test trains (followed by a Q), priority ECS and railhead conditioning trains",
+    "4": "Fast freight usually 75mph max",
+    "5": "Empty coaching stock moves",
+    "6": "General freight with a max speed of 60mph",
+    "7": "Slower freight with a max speed of 45mph",
+    "8": "Severely limited trains and rail head conditioning trains",
+    "9": "Services that are subject to special operating requirements on certain parts of the network",
+}
+
 
 @dataclass
 class Train:
@@ -45,6 +57,7 @@ departure_time: {self.departure_time}
 from_location: {self.from_location}
 to_location: {self.to_location}
 operator: {self.operator}
+headcode meaning: {HEADCODE_FIRST_NUMBER_MEANINGS.get(self.headcode[0], "Unknown")}
 href: {self.href}"""
         )
 
