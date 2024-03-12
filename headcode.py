@@ -4,6 +4,7 @@
 import sys
 import re
 from dataclasses import dataclass
+from typing import List, Optional
 import requests
 from bs4 import BeautifulSoup
 
@@ -18,10 +19,11 @@ class Train:
     """Train"""
 
     headcode: str
-    departure_time: str
-    from_location: str
-    to_location: str
-    href: str
+    departure_time: Optional[str] = None
+    from_location: Optional[str] = None
+    to_location: Optional[str] = None
+    operator: Optional[str] = None
+    href: Optional[str] = None
 
     def __str__(self):
         return (
@@ -35,59 +37,66 @@ class Train:
             f"from_location={self.from_location}, to_location={self.to_location}, href={self.href})"
         )
 
+    def pprint(self):
+        """pretty print"""
+        print(
+            f"""headcode: {self.headcode}
+departure_time: {self.departure_time}
+from_location: {self.from_location}
+to_location: {self.to_location}
+operator: {self.operator}
+href: {self.href}"""
+        )
 
-def main(headcode: str = HEADCODE):
-    """main"""
-    request_url = f"{BASE_URL}{HEADCODE}"
+
+def get_trains(headcode) -> List[Train]:
+    """Get trains for a headcode
+
+    Args:
+        headcode (str): Headcode
+
+    Raises:
+        requests.exceptions.RequestException: Request exception
+
+    Returns:
+        List[Train]: List of trains
+    """
+    request_url = f"{BASE_URL}{headcode}"
     response = requests.get(request_url, timeout=10)
 
     if response.status_code == 200:
         response_html = response.text
     else:
-        print(f"Error: {response.status_code}")
-        sys.exit(1)
+        raise requests.exceptions.RequestException(f"Error: {response.status_code}")
 
     soup = BeautifulSoup(response_html, "html.parser")
-
-    # FIND NUMBER OF RESULTS
-    # find .heading-container > p
-    number_found = soup.select_one(".heading-container > p")
-    if not number_found:
-        print("Could not find result number")
-        sys.exit(1)
-    number_text = number_found.get_text()
-    match = re_showing.search(number_text)
-    if not match:
-        print("Could not find result number")
-        sys.exit(1)
-    result_number = int(match.group(1))
-    print(f"Found {result_number} results")
 
     # FIND RESULTS
     # find .service-results
     results = soup.select_one(".service-results")
     if not results:
-        print("Results not found")
-        sys.exit(1)
+        raise ValueError("Results not found")
 
     # find .service-results > .service-link
     all_results = results.select(".service-link")
     if not all_results:
-        print("Result not found")
-        sys.exit(1)
+        raise ValueError("Result not found")
 
-    for i, result in enumerate(all_results):
+    trains = []
+    for result in all_results:
+        train = Train(
+            headcode=HEADCODE,
+        )
+
         href = result.get("href")
-        print()
-        print(f"Result {i+1}: {href}")
+        if href:
+            train.href = href
 
         # FIND DEPARTURE TIME
         # find .timing-card-times > p:nth-child(2)
         departure_time = result.select_one(".timing-card-times > p:nth-child(2)")
         if departure_time:
-            print(f"Departure time: {departure_time.get_text()}")
-        else:
-            print("Departure time not found")
+            train.departure_time = departure_time.get_text()
 
         # FIND FROM/TO
         # find (both) .timing-card-locations > p
@@ -95,26 +104,26 @@ def main(headcode: str = HEADCODE):
         if locations:
             from_location = locations[0].get_text()
             to_location = locations[1].get_text()
-            print(f"From: {from_location}")
-            print(f"To: {to_location}")
-        else:
-            print("From/To not found")
+            train.from_location = from_location
+            train.to_location = to_location
 
         # FIND OPERATOR
         # find .operator
         operator = result.select_one(".operator > p")
         if operator:
-            print(f"Operator: {operator.get_text()}")
-        else:
-            print("Operator not found")
+            train.operator = operator.get_text()
 
-        train = Train(
-            headcode=HEADCODE,
-            departure_time=departure_time.get_text(),
-            from_location=from_location,
-            to_location=to_location,
-            href=href,
-        )
+        trains.append(train)
+
+    return trains
+
+
+def main(headcode: str = HEADCODE):
+    """main"""
+    trains = get_trains(headcode)
+    for train in trains:
+        print()
+        train.pprint()
 
 
 if __name__ == "__main__":
