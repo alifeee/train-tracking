@@ -37,3 +37,15 @@ Operator: Northern
 
 ...
 ```
+
+...or...
+
+```python
+from headcode import Train, get_trains
+
+HEADCODE = "5Z39"
+
+trains = get_trains(headcode)
+for train in trains:
+    train.pprint()
+```
