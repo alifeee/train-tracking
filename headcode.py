@@ -4,25 +4,29 @@
 import sys
 import re
 from dataclasses import dataclass
+from datetime import datetime
 from typing import List, Optional
 import requests
 from bs4 import BeautifulSoup
 
-BASE_URL = "https://live.rail-record.co.uk/headcode/?d=2024-03-12&a=&headcode="
+BASE_URL = "https://live.rail-record.co.uk/headcode/?d={date}&a=&headcode={headcode}"
 HEADCODE = "2S80"
 
 re_showing = re.compile(r"Showing (\d+) services")
 
 HEADCODE_FIRST_NUMBER_MEANINGS = {
-    "1": "Indicates an express train with limited stops, with exceptions (test trains, 1Z99 rescue trains)",
-    "2": "Indicates a slow train with frequent stops, with exceptions (2Z02 Caroline and 2Qxx test trains)",
+    "1": "Indicates an express train with limited stops, with exceptions "
+    "(test trains, 1Z99 rescue trains)",
+    "2": "Indicates a slow train with frequent stops, with exceptions "
+    "(2Z02 Caroline and 2Qxx test trains)",
     "3": "Test trains (followed by a Q), priority ECS and railhead conditioning trains",
     "4": "Fast freight usually 75mph max",
     "5": "Empty coaching stock moves",
     "6": "General freight with a max speed of 60mph",
     "7": "Slower freight with a max speed of 45mph",
     "8": "Severely limited trains and rail head conditioning trains",
-    "9": "Services that are subject to special operating requirements on certain parts of the network",
+    "9": "Services that are subject to special operating requirements "
+    "on certain parts of the network",
 }
 
 
@@ -62,6 +66,15 @@ href: {self.href}"""
         )
 
 
+def _get_today_date() -> str:
+    """Get today's date
+
+    Returns:
+        str: Today's date
+    """
+    return datetime.today().strftime("%Y-%m-%d")
+
+
 def get_trains(headcode) -> List[Train]:
     """Get trains for a headcode
 
@@ -74,7 +87,7 @@ def get_trains(headcode) -> List[Train]:
     Returns:
         List[Train]: List of trains
     """
-    request_url = f"{BASE_URL}{headcode}"
+    request_url = BASE_URL.format(date=_get_today_date(), headcode=headcode)
     response = requests.get(request_url, timeout=10)
 
     if response.status_code == 200:
