@@ -1,3 +1,5 @@
+> [!CAUTION]
+> MOVED! see <https://git.alifeee.net/train-tracking/about/>
 # Train tracking
 
 Using <https://www.opentraintimes.com/maps/signalling/spc5> to get train headcodes.
